@@ -102,6 +102,11 @@ bool Simulation::InitArgs()
     _maxSimTime       = _config->GetTmax();
     _periodic         = _config->IsPeriodic();
     _fps              = _config->GetFps();
+    _xmax             = _config->get_xmax();
+    _ymax             = _config->get_ymax();
+    _xmin             = _config->get_xmin();
+    _ymin             = _config->get_ymin();
+
 
     _routingEngine   = _config->GetRoutingEngine();
     auto distributor = std::make_unique<PedDistributor>(PedDistributor(_config));
@@ -135,7 +140,7 @@ bool Simulation::InitArgs()
 
     //other initializations
     for(auto && ped : _building->GetAllPedestrians()) {
-        ped->SetDeltaT(_deltaT);
+        ped->Setdt(_deltaT);
     }
     _nPeds = _building->GetAllPedestrians().size();
     LOG_INFO("Number of peds received: {}", _nPeds);
@@ -208,7 +213,7 @@ void Simulation::UpdateRoutesAndLocations()
 
     SimulationHelper::RemoveFaultyPedestrians(
         *_building, pedsNotRelocated, "Could not be properly relocated");
-    SimulationHelper::RemovePedestrians(*_building, _pedsToRemove);
+    SimulationHelper::RemovePedestrians(*_building, _pedsToRemove,_periodic,_xmax,_xmin,_ymax,_ymin);
 
     //TODO discuss simulation flow -> better move to main loop, does not belong here
     bool geometryChangedFlow  = SimulationHelper::UpdateFlowRegulation(*_building);
@@ -329,7 +334,7 @@ void Simulation::PrintStatistics(double simTime)
 void Simulation::RunHeader(long nPed)
 {
     // Copy input files used for simulation to output folder for reproducibility
-    CopyInputFilesToOutPath();
+    //CopyInputFilesToOutPath();
     UpdateOutputFiles();
 
     // writing the header
@@ -371,8 +376,9 @@ double Simulation::RunBody(double maxSimTime)
     //important since the number of peds is used
     //to break the main simulation loop
     AddNewAgents();
-    _nPeds                  = _building->GetAllPedestrians().size();
-    std::string description = "Evacuation ";
+    _nPeds = _building->GetAllPedestrians().size();
+    std::cout << "\n";
+    std::string description = "Evacutation ";
     int initialnPeds        = _nPeds;
     // main program loop
     while((_nPeds || (!_agentSrcManager.IsCompleted() && _gotSources)) && t < maxSimTime) {
@@ -390,7 +396,7 @@ double Simulation::RunBody(double maxSimTime)
 
             //update the events
             bool eventProcessed = _em->ProcessEvents(Pedestrian::GetGlobalTime());
-            _routingEngine->setNeedUpdate(eventProcessed || _routingEngine->NeedsUpdate());
+            _building->GetRoutingEngine()->setNeedUpdate(eventProcessed);
 
             //here we could place router-tasks (calc new maps) that can use multiple cores AND we have 't'
             //update quickestRouter

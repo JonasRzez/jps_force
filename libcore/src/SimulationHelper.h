@@ -29,6 +29,9 @@ enum class PedRelocation { SUCCESSFUL, NOT_NEEDED, FAILED };
 
 namespace SimulationHelper
 {
+
+bool CheckIfPedIsInRoom(const Building & building, Pedestrian & ped);
+
 /**
  * Checks whether the pedestrian \p ped is still in the assigned room. If not check if \p ped is
  * in an neighbouring room/subroom and update the information. If \p ped has moved to a
@@ -127,5 +130,5 @@ void RemoveFaultyPedestrians(
  * @param building geometry used in the simulation
  * @param peds list of faulty pedestrians, which should be deleted
  */
-void RemovePedestrians(Building & building, std::vector<Pedestrian *> & peds);
+void RemovePedestrians(Building & building, std::vector<Pedestrian *> & peds, int periodic,double xmax,double xmin, double ymax, double ymin);
 } //namespace SimulationHelper

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<JuPedSim project="scenario_ben" version="0.8"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m">
+
+<header>
+  <!-- seed used for initialising random generator -->
+  <!-- geometry file -->
+  <seed>{{seed}}</seed>
+  <max_sim_time>{{t_max}}</max_sim_time>
+  <geometry>{{geo}}</geometry>
+  <!-- traectories file and format -->
+  <trajectories format="plain"  fps="{{fps}}">
+    <file location="{{location}}" />
+  </trajectories>
+  <!-- where to store the logs -->
+  <logfile>evac_log</logfile>
+</header>
+
+<traffic_constraints>
+        <!-- doors states are: close or open -->
+        <doors>
+            <door trans_id="1" caption="main_exit" state="open" />
+        </doors>
+</traffic_constraints>
+
+<agents operational_model_id="3">
+        <agents_distribution>
+                <group group_id="1" agent_parameter_id="1" room_id="1" subroom_id="1" number="{{N_ped}}"  router_id="1"x_min="-{{b}}"  x_max="{{b}}" y_min="0" y_max = "{{l}}"  />
+                
+        </agents_distribution>
+</agents>
+
+<operational_models>
+
+    <model operational_model_id="3" description="Tordeux2015">
+        <model_parameters>
+            <solver>euler</solver>
+            <periodic>{{periodic}}</periodic>
+            <periodic_boundaries ymin = "{{l}}" ymax = "{{ll}}" xmin = "-{{b}}" xmax = "{{b}}" />
+            <stepsize>{{stepsize}}</stepsize>
+            <write_VTK_files>false</write_VTK_files>
+
+            <exit_crossing_strategy>8</exit_crossing_strategy>
+            <delta_h>0.0625</delta_h>
+            <wall_avoid_distance>{{aviod_wall}}</wall_avoid_distance>
+            <use_wall_avoidance>true</use_wall_avoidance>
+            
+            <linkedcells enabled="true" cell_size="2.2" />
+            <force_ped a="0" D="0.07" />
+            <force_wall a="0" D="0.005" />
+            <e_noise mu = "0.0" sigma = "{{esig}}" />
+        </model_parameters>
+        <agent_parameters agent_parameter_id="1">
+            <v0 mu="{{v0}}" sigma="0.00" />
+            <bmax mu="{{r}}" sigma="0.00000" /> <!-- this is l, assuming peds are circles with constant radius -->
+            <bmin mu="{{r}}" sigma="0.00000" />
+            <amin mu="{{r}}" sigma="0.00000" />
+            <tau mu="0.5" sigma="0.00" />
+            <atau mu="0.0" sigma="0.00000" />
+            
+            <T mu="{{T}}" sigma="0.00" />
+        </agent_parameters>
+    </model>
+</operational_models>
+
+<route_choice_models>
+        <router router_id="1" description="ff_global_shortest">
+        </router>
+</route_choice_models>
+</JuPedSim>

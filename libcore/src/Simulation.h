@@ -49,7 +49,7 @@ class Simulation
 {
 private:
     /// Max file size 16Mb
-    static const size_t _maxFileSize{1 << 24};
+    static const size_t _maxFileSize{1 << 30};
     Configuration * _config;
     long _nPeds;
     double _deltaT;
@@ -67,6 +67,13 @@ private:
     AgentsSourcesManager _agentSrcManager;
     int _periodic;
     int _maxSimTime;
+    double _xmax;
+    double _ymax;
+    double _xmin;
+    double _ymin;
+
+
+
     /// Will be set if pedestrian sources exist
     bool _gotSources;
 

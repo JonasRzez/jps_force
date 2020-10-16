@@ -56,6 +56,34 @@ SimulationHelper::UpdatePedestrianRoomInformation(const Building & building, Ped
     }
 }
 
+bool SimulationHelper::CheckIfPedIsInRoom(const Building & building, Pedestrian & ped)
+{
+    // No relocation needed, ped is in its assigned room/subroom
+    // TODO add check if room/subroom really exist
+    auto oldSubRoom = building.GetRoom(ped.GetRoomID())->GetSubRoom(ped.GetSubRoomID());
+    if(oldSubRoom->IsInSubRoom(&ped)) {
+        return true;
+    }
+
+    // relocation needed, look if pedestrian is in one of the neighboring rooms/subrooms
+    // get all connected directly connected rooms/subrooms
+    // TODO check for closed doors?
+    auto subroomsConnected = oldSubRoom->GetNeighbors();
+    auto currentSubRoom    = std::find_if(
+        std::begin(subroomsConnected),
+        std::end(subroomsConnected),
+        [&ped](auto const & subroom) -> bool { return subroom->IsInSubRoom(ped.GetPos()); });
+
+    // pedestrian is in one of the neighboring rooms/subrooms
+    if(currentSubRoom != subroomsConnected.end()) {
+
+        return true;
+    } else {
+
+        return false;
+    }
+}
+
 std::vector<Pedestrian *> SimulationHelper::FindPedestriansReachedFinalGoal(
     const Building & building,
     const std::vector<Pedestrian *> & peds)
@@ -170,7 +198,7 @@ SimulationHelper::FindPassedDoor(const Building & building, const Pedestrian & p
             std::end(subroom->GetAllTransitions()));
     }
 
-    Line step{ped.GetLastPosition(), ped.GetPos(), 0};
+    Line step{ped.GetLastPosition(), ped.GetPos()};
     // TODO check for closed doors and distance?
     auto passedTrans = std::find_if(
         std::begin(transitions), std::end(transitions), [&step](const Transition * trans) -> bool {
@@ -265,16 +293,30 @@ void SimulationHelper::RemoveFaultyPedestrians(
             message);
     });
 
-    SimulationHelper::RemovePedestrians(building, pedsFaulty);
+    SimulationHelper::RemovePedestrians(building, pedsFaulty,0,0,0,0,0);
 }
 
-void SimulationHelper::RemovePedestrians(Building & building, std::vector<Pedestrian *> & peds)
+void SimulationHelper::RemovePedestrians(Building & building, std::vector<Pedestrian *> & peds,int periodic,double xmax,double xmin,double ymax,double ymin)
 {
-    sort(peds.begin(), peds.end());
-    peds.erase(unique(peds.begin(), peds.end()), peds.end());
+    std::for_each(std::begin(peds), std::end(peds), [&building,xmax,ymax,xmin,ymin,periodic](Pedestrian * ped) {
+        if(periodic > 0){
+            double x = (xmax - xmin) * ((double)rand() / (double)RAND_MAX ) + xmin;
+            double y = (ymax - ymin) * ((double)rand() / (double)RAND_MAX ) + ymin;
+            std::cout << "new x " << x << " , " << "new y " << y << std::endl;
+            std::cout << "xmin " << xmin << " , " << "ymin " << ymin << std::endl;
+            std::cout << "xmax " << xmax << " , " << "ymax " << ymax << std::endl;
 
-    std::for_each(std::begin(peds), std::end(peds), [&building](Pedestrian * ped) {
+
+            ped->SetPos({x, y});
+            ped->SetRoomID(1);
+            ped->SetSubRoomID(1);
+            ped->SetSubRoomUID(1);
+
+
+        }
+        else{
         building.DeletePedestrian(ped);
+        }
     });
 
     peds.clear();

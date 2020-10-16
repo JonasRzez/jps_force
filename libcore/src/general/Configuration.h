@@ -1,4 +1,4 @@
-/**
+    /**
  * \section License
  * This file is part of JuPedSim.
  *
@@ -219,7 +219,31 @@ public:
     void SetDistEffMaxPed(double distEffMaxPed) { _distEffMaxPed = distEffMaxPed; };
 
     double GetDistEffMaxWall() const { return _distEffMaxWall; };
+    
+    double get_xmax() const { return _xmax; };
 
+    void set_xmax(double xmax) { _xmax = xmax; };
+
+    double get_ymin() const { return _ymin; };
+
+    void set_ymin(double ymin) { _ymin = ymin; };
+
+    double get_ymax() const { return _ymax; };
+
+    void set_ymax(double ymax) { _ymax = ymax; };
+
+    double get_xmin() const { return _xmin; };
+
+    void set_xmin(double xmin) { _xmin = xmin; };
+
+    double get_emu() const { return _emu;};
+
+    void set_emu(double emu) { _emu = emu;};
+
+    double get_esigma() const { return _esigma;};
+
+    void set_esigma(double esigma) { _esigma = esigma;};
+    
     void SetDistEffMaxWall(double distEffMaxWall) { _distEffMaxWall = distEffMaxWall; };
 
     double get_deltaH() const { return _deltaH; }
@@ -411,6 +435,12 @@ private:
     double _cWall;
     double _dWall;
     double _dPed;
+    double _xmin;
+    double _ymin;
+    double _xmax;
+    double _ymax;
+    double _emu;
+    double _esigma;
     double _intPWidthPed;
     double _intPWidthWall;
     double _maxFPed;

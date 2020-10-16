@@ -6,6 +6,55 @@
 #include <Logger.h>
 #include <tinyxml.h>
 
+static fs::path getTrainTimeTableFileName(const fs::path & projectFile)
+{
+    fs::path ret{};
+
+    TiXmlDocument doc(projectFile.string());
+    if(!doc.LoadFile()) {
+        LOG_ERROR("{}", doc.ErrorDesc());
+        LOG_ERROR("GetTrainTimeTable could not parse the project file");
+        return ret;
+    }
+    TiXmlNode * xMainNode = doc.RootElement();
+    if(xMainNode->FirstChild("train_constraints")) {
+        TiXmlNode * xFileNode =
+            xMainNode->FirstChild("train_constraints")->FirstChild("train_time_table");
+
+        if(xFileNode) {
+            ret = xFileNode->FirstChild()->ValueStr();
+        }
+        LOG_INFO("train_time_table <{}>", ret.string());
+    } else {
+        LOG_INFO("No ttt file found");
+        return ret;
+    }
+    return ret;
+}
+
+static fs::path getTrainTypeFileName(const fs::path & projectFile)
+{
+    fs::path ret{};
+
+    TiXmlDocument doc(projectFile.string());
+    if(!doc.LoadFile()) {
+        LOG_ERROR("{}", doc.ErrorDesc());
+        LOG_ERROR("GetTrainType could not parse the project file");
+        return ret;
+    }
+    TiXmlNode * xMainNode = doc.RootElement();
+    if(xMainNode->FirstChild("train_constraints")) {
+        auto xFileNode = xMainNode->FirstChild("train_constraints")->FirstChild("train_types");
+        if(xFileNode)
+            ret = xFileNode->FirstChild()->ValueStr();
+        LOG_INFO("train_types <{}>", ret.string());
+    } else {
+        LOG_INFO("No train types file found");
+        return ret;
+    }
+    return ret;
+}
+
 /**
  * TXT format implementation
  */
@@ -86,16 +135,6 @@ void TrajectoriesTXT::WriteHeader(long nPeds, double fps, Building * building, i
     header.append(fmt::format(
         "#geometry: {:s}\n", building->GetConfig()->GetGeometryFile().filename().string()));
 
-    // if used: add two necessary files time table and train types
-    if(!building->GetConfig()->GetTrainTimeTableFile().empty() &&
-       !building->GetConfig()->GetTrainTypeFile().empty()) {
-        header.append(fmt::format(
-            "#trainTimeTable: {:s}\n",
-            building->GetConfig()->GetTrainTimeTableFile().filename().string()));
-
-        header.append(fmt::format(
-            "#trainType: {:s}\n", building->GetConfig()->GetTrainTypeFile().filename().string()));
-    }
     // if used: add source file name
     if(!building->GetConfig()->GetSourceFile().empty()) {
         header.append(fmt::format(
@@ -114,6 +153,21 @@ void TrajectoriesTXT::WriteHeader(long nPeds, double fps, Building * building, i
             "#events: {:s}\n", building->GetConfig()->GetEventFile().filename().string()));
     }
 
+    // if used: add trainTimeTable file name
+    if(const fs::path trainTimeTableFileName =
+           getTrainTimeTableFileName(building->GetProjectFilename());
+       !trainTimeTableFileName.empty()) {
+        const fs::path tmpTTT = projRoot / trainTimeTableFileName;
+        header.append(fmt::format("#trainTimeTable: {:s}\n", tmpTTT.string()));
+    }
+
+    // if used: add trainType file name
+    if(const fs::path trainTypeFileName = getTrainTypeFileName(building->GetProjectFilename());
+       !trainTypeFileName.empty()) {
+        const fs::path tmpTT = projRoot / trainTypeFileName;
+        header.append(fmt::format("#trainType: {:s}\n", tmpTT.string()));
+    }
+
     header.append("#ID: the agent ID\n");
     header.append("#FR: the current frame\n");
     header.append("#X,Y,Z: the agents coordinates (in metres)\n");
@@ -126,7 +180,7 @@ void TrajectoriesTXT::WriteHeader(long nPeds, double fps, Building * building, i
         header.append(_optionalOutputInfo[option]);
     }
 
-    header.append("\n#ID\tFR\tX\tY\tZ\tA\tB\tANGLE\tCOLOR\t");
+    header.append("\n#ID\tFR\tX\tY\tANGLE\tCOLOR\tspeed_nn\tANGLE_int_nn\tIntID\tAngleDirNn");
     // Add header for optional output options
     for(const auto & option : _optionalOutputOptions) {
         header.append(_optionalOutputHeader[option]);
@@ -142,27 +196,32 @@ void TrajectoriesTXT::WriteFrame(int frameNr, Building * building)
     for(auto ped : allPeds) {
         double x       = ped->GetPos()._x;
         double y       = ped->GetPos()._y;
-        double z       = ped->GetElevation();
+        //double z       = ped->GetElevation();
         int color      = ped->GetColor();
-        double a       = ped->GetLargerAxis();
-        double b       = ped->GetSmallerAxis();
+        //double a       = ped->GetLargerAxis();
+        //double b       = ped->GetSmallerAxis();
         double phi     = atan2(ped->GetEllipse().GetSinPhi(), ped->GetEllipse().GetCosPhi());
         double RAD2DEG = 180.0 / M_PI;
+        double dir_phi = atan2(ped->GetDirNn()._y,ped->GetDirNn()._x);
+        double speed_nn = ped->GetSpeedNn();
+        double angle_nn_int = ped->GetAngleNn();
+        int intID = ped->GetIntID();
+        int intIDN = ped->GetIntIDN();
         unsigned int precision = GetPrecision();
         std::string frame      = fmt::format(
-            "{:d}\t{:d}\t{:0.{}f}\t{:0.{}f}\t{:0.{}f}\t{:0.2f}\t{:0.2f}\t{:0.2f}\t{:d}\t",
+            "{:d}\t{:d}\t{:0.{}f}\t{:0.{}f}\t{:0.2f}\t{:d}\t{:0.2f}\t{:0.10f}\t{:d}\t{:0.10f}",
             ped->GetID(),
             frameNr,
             x,
             precision,
             y,
             precision,
-            z,
-            precision,
-            a,
-            b,
             phi * RAD2DEG,
-            color);
+            color,
+            speed_nn,
+            angle_nn_int,
+            intID,
+            dir_phi);
         for(const auto & option : _optionalOutputOptions) {
             frame.append(_optionalOutput[option](ped));
         }

@@ -34,27 +34,30 @@
 #include "geometry/Wall.h"
 #include "neighborhood/NeighborhoodSearch.h"
 #include "pedestrian/Pedestrian.h"
-
+#include "SimulationHelper.h"
 #include <Logger.h>
 
 double xRight = 26.0;
 double xLeft  = 0.0;
 double cutoff = 2.0;
-
-VelocityModel::VelocityModel(
-    std::shared_ptr<DirectionManager> dir,
-    double aped,
-    double Dped,
-    double awall,
-    double Dwall)
+VelocityModel::VelocityModel( std::shared_ptr<DirectionManager> dir,
+       double aped,
+       double Dped,
+       double awall,
+       double Dwall,
+       double esigma,
+       double emu)
 {
-    _direction = dir;
-    // Force_rep_PED Parameter
-    _aPed = aped;
-    _DPed = Dped;
-    // Force_rep_WALL Parameter
-    _aWall = awall;
-    _DWall = Dwall;
+     _direction = dir;
+     // Force_rep_PED Parameter
+     _aPed = aped;
+     _DPed = Dped;
+     // Force_rep_WALL Parameter
+     _aWall = awall;
+     _DWall = Dwall;
+    
+    _esigma = esigma;
+    _emu = emu;
 }
 
 
@@ -76,6 +79,7 @@ bool VelocityModel::Init(Building * building)
         // to wait in waiting areas
         int res = ped->FindRoute();
         if(!ped_is_waiting && res == -1) {
+            std::cout << ped->GetID() << " has no route\n";
             LOG_ERROR(
                 "VelocityModel::Init() cannot initialise route. ped {:d} is deleted in Room "
                 "%d %d.\n",
@@ -98,7 +102,7 @@ bool VelocityModel::Init(Building * building)
         if(ped->GetExitLine())
             target = ped->GetExitLine()->ShortestPoint(ped->GetPos());
         else {
-            LOG_WARNING("Ped {} has no exit line in INIT", ped->GetID());
+            std::cout << "Ped " << ped->GetID() << " has no exit line in INIT\n";
         }
         Point d     = target - ped->GetPos();
         double dist = d.Norm();
@@ -146,9 +150,13 @@ void VelocityModel::ComputeNextTimeStep(
     {
         std::vector<Point> result_acc = std::vector<Point>();
         result_acc.reserve(nSize);
-        std::vector<my_pair> spacings = std::vector<my_pair>();
+        std::vector<std::tuple<double,double,int>>spacings = std::vector<std::tuple<double,double,int>>();
+        std::vector<std::tuple<double,double,int>> spacings_nonoise = std::vector<std::tuple<double,double,int>>();
+
         spacings.reserve(nSize);             // larger than needed
-        spacings.push_back(my_pair(100, 1)); // in case there are no neighbors
+        spacings.push_back(std::make_tuple(100,1,-1)); // in case there are no neighbors
+        spacings_nonoise.reserve(nSize);             // larger than needed
+        spacings_nonoise.push_back(std::make_tuple(100,1,-1)); // in case there are no neighbors
         const int threadID = omp_get_thread_num();
 
         int start = threadID * partSize;
@@ -165,6 +173,9 @@ void VelocityModel::ComputeNextTimeStep(
             int size = (int) neighbours.size();
             for(int i = 0; i < size; i++) {
                 Pedestrian * ped1 = neighbours[i];
+                if(ped1 == nullptr) {
+                    std::cout << "Velocity Model debug: " << size << std::endl;
+                }
                 //if they are in the same subroom
                 Point p1 = ped->GetPos();
 
@@ -189,16 +200,41 @@ void VelocityModel::ComputeNextTimeStep(
                 }
             } // for i
             //repulsive forces to walls and closed transitions that are not my target
-            Point repWall = ForceRepRoom(allPeds[p], subroom);
+            //Point repWall = ForceRepRoom(allPeds[p], subroom);
 
             // calculate new direction ei according to (6)
-            Point direction = e0(ped, room) + repPed + repWall;
+            Point direction = e0(ped, room); //+ repPed + repWall;
+            ped->SetDirNn(direction);
+
+            std::random_device rd;
+            std::mt19937 eng(rd());
+            //std::mt19937 mt(ped->GetBuilding()->GetConfig()->GetSeed());
+            //std::uniform_real_distribution<double> dist(0, 1.0);
+            //std::cout << "emu = " << _emu << " esigme = " << _esigma << std::endl;
+            std::normal_distribution<double> dist(_emu,_esigma); //this could be angle
+
+            double random_x = dist(eng);
+            //std::cout << random_x << std::endl;
+            //Log->Write("%f", random_x);
+            double random_y = dist(eng);
+            //std::cout << random_y << std::endl;
+            Point noise = Point(random_x,random_y);
+            //std::cout <<"nonoise " << direction._x << " " << direction._y << std::endl;
+            Point direction_nonoise = direction;
+
+            direction = direction + noise;
+            direction = direction.Normalized();
+            ped->SetDir(direction);
+            //std::cout << "noise "  <<  direction._x << " " << direction._y << std::endl;
+
+            
             for(int i = 0; i < size; i++) {
                 Pedestrian * ped1 = neighbours[i];
                 // calculate spacing
                 // my_pair spacing_winkel = GetSpacing(ped, ped1);
                 if(ped->GetUniqueRoomID() == ped1->GetUniqueRoomID()) {
                     spacings.push_back(GetSpacing(ped, ped1, direction, periodic));
+                    spacings_nonoise.push_back(GetSpacing(ped,ped1,direction_nonoise,periodic));
                 } else {
                     // or in neighbour subrooms
                     SubRoom * sb2 =
@@ -212,8 +248,11 @@ void VelocityModel::ComputeNextTimeStep(
             //TODO update direction every DT?
 
             // calculate min spacing
-            std::sort(spacings.begin(), spacings.end(), sort_pred());
-            double spacing = spacings[0].first;
+            std::sort(spacings.begin(), spacings.end());
+            std::sort(spacings_nonoise.begin(), spacings_nonoise.end());
+
+            double spacing = std::get<0>(spacings[0]);
+            double spacing_nonoise = std::get<0>(spacings_nonoise[0]);
             //============================================================
             // TODO: Hack for Head on situations: ped1 x ------> | <------- x ped2
             if(0 && direction.NormSquare() < 0.5) {
@@ -231,11 +270,17 @@ void VelocityModel::ComputeNextTimeStep(
             }
             //============================================================
             Point speed = direction.Normalized() * OptimalSpeed(ped, spacing);
+            ped->SetSpeedNn(OptimalSpeed(ped, spacing_nonoise));
+            //ped->SetAngleNn(std::get<1>(spacings_nonoise[0]));
+            ped->SetAngleNn(std::get<1>(spacings_nonoise[0]));
+            ped->SetIntID(std::get<2>(spacings_nonoise[0]));
+            ped->SetIntIDN(std::get<2>(spacings[0]));
+            
             result_acc.push_back(speed);
 
 
             spacings.clear(); //clear for ped p
-
+            spacings_nonoise.clear();
             // stuck peds get removed. Warning is thrown. low speed due to jam is omitted.
             if(ped->GetTimeInJam() > ped->GetPatienceTime() &&
                ped->GetGlobalTime() > 10000 + ped->GetPremovementTime() &&
@@ -260,12 +305,15 @@ void VelocityModel::ComputeNextTimeStep(
 
 #pragma omp barrier
         // update
+        std::vector<Pedestrian *> pedCheck;
+        pedCheck.reserve(1);
         for(int p = start; p <= end; ++p) {
             Pedestrian * ped = allPeds[p];
-
+            pedCheck[0] = ped;
             Point v_neu   = result_acc[p - start];
-            Point pos_neu = ped->GetPos() + v_neu * deltaT;
-
+            Point pos_alt = ped->GetPos();
+            Point pos_neu = pos_alt + v_neu * deltaT;
+            
             //Jam is based on the current velocity
             if(v_neu.Norm() >= ped->GetV0Norm() * 0.5) {
                 ped->ResetTimeInJam();
@@ -276,14 +324,46 @@ void VelocityModel::ComputeNextTimeStep(
             if(v_neu.Norm() >= J_EPS_V) {
                 ped->SetPhiPed();
             }
+            
+            
+            //int oldRoomID = ped->GetRoomID();
+            //int oldSubRoomID = ped->GetSubRoomID();
+            //int oldSubRoomUID = ped->GetSubRoomUID();
             ped->SetPos(pos_neu);
+
+            bool checkPed = SimulationHelper::CheckIfPedIsInRoom(*building, *ped);
+            //auto pedReachedFinalGoal = SimulationHelper::FindPedestriansReachedFinalGoal(*building, pedCheck);
+            double x_neu = pos_neu._x;
+            double y_neu = pos_neu._y;
+            const auto & goals = building->GetAllGoals();
+
+            bool pedReachedGoal = ped->GetFinalDestination() != FINAL_DEST_OUT &&
+            goals.at(ped->GetFinalDestination())->Contains(ped->GetPos()) &&
+            goals.at(ped->GetFinalDestination())->GetIsFinalGoal();
+            //std::cout<<pedReachedGoal<<std::endl;
+            
+            
+            if((checkPed == false) && ((y_neu > -1.) or (std::abs(x_neu) > 0.5))) {
+                
+                //ped->SetPos(pos_alt);
+                //ped->SetRoomID(oldRoomID);
+                //ped->SetSubRoomID(oldSubRoomID);
+                //ped->SetSubRoomUID(oldSubRoomUID);
+                ped->SetPos(pos_alt);
+                std::cout<<"Pedestrian was not allowed to take step" << std::endl;
+            }
+            else{
+                ped->SetV(v_neu);
+                
+            }
             if(periodic) {
                 if(ped->GetPos()._x >= xRight) {
                     ped->SetPos(Point(ped->GetPos()._x - (xRight - xLeft), ped->GetPos()._y));
                     //ped->SetID( ped->GetID() + 1);
                 }
             }
-            ped->SetV(v_neu);
+            
+            
         }
     } //end parallel
 
@@ -302,7 +382,7 @@ Point VelocityModel::e0(Pedestrian * ped, Room * room) const
         // target is where the ped wants to be after the next timestep
         target = _direction->GetTarget(room, ped);
     } else { //@todo: we need a model for waiting pedestrians
-        LOG_WARNING("VelocityModel::e0 Ped {} has no navline.", ped->GetID());
+        std::cout << ped->GetID() << " VelocityModel::e0 Ped has no navline.\n";
         // set random destination
         std::mt19937 mt(ped->GetBuilding()->GetConfig()->GetSeed());
         std::uniform_real_distribution<double> dist(0, 1.0);
@@ -339,7 +419,6 @@ Point VelocityModel::e0(Pedestrian * ped, Room * room) const
     return desired_direction;
 }
 
-
 double VelocityModel::OptimalSpeed(Pedestrian * ped, double spacing) const
 {
     double v0    = ped->GetV0Norm();
@@ -354,14 +433,39 @@ double VelocityModel::OptimalSpeed(Pedestrian * ped, double spacing) const
 }
 
 // return spacing and id of the nearest pedestrian
-my_pair
+std::tuple<double,double,int>
 VelocityModel::GetSpacing(Pedestrian * ped1, Pedestrian * ped2, Point ei, int periodic) const
 {
     Point distp12 = ped2->GetPos() - ped1->GetPos(); // inversed sign
+    Point dir_nn = ped1->GetDirNn();
+    Point dir_nn_j = ped2->GetDirNn();
+    Point dir = ped1->GetDir();
+    Point dir_j = ped2->GetDir();
+    double dir_angle_nn;
+    if (dir_nn.NormSquare() > 0. && dir_nn_j.NormSquare() > 0.){
+        dir_angle_nn = dir_nn.Normalized().ScalarProduct(dir_nn_j.Normalized());
+        /*if (dir_angle_nn == 1){
+            LOG_WARNING(
+                    "dir x ({:.2f}) dir y ({:.2f}) dirj x ({:.2f}) dirj y ({:.2f}) with pos1 ({:.2f},{:.2f}) and pos2 ({:.2f},{:.2f}) ",
+                    dir_nn._x,
+                    dir_nn._y,
+                    dir_nn_j._x,
+                    dir_nn_j._y,
+                    ped1->GetPos()._x,
+                    ped1->GetPos()._y,
+                    ped2->GetPos()._x,
+                    ped2->GetPos()._y);
+            }*/
+        }
+    
+    else{
+        dir_angle_nn = -3.;
+    }
+    //double dir_angle = dir.Normalized().ScalarProduct(dir_j.Normalized());
     if(periodic) {
         double x   = ped1->GetPos()._x;
         double x_j = ped2->GetPos()._x;
-
+        
         if((xRight - x) + (x_j - xLeft) <= cutoff) {
             distp12._x = distp12._x + xRight - xLeft;
         }
@@ -385,11 +489,16 @@ VelocityModel::GetSpacing(Pedestrian * ped1, Pedestrian * ped2, Point ei, int pe
         ei.Rotate(0, 1).ScalarProduct(ep12); // theta = pi/2. condition2 should <= than l/Distance
     condition2 = (condition2 > 0) ? condition2 : -condition2; // abs
 
-    if((condition1 >= 0) && (condition2 <= l / Distance))
+    if((condition1 >= 0) && (condition2 <= l / Distance)){
         // return a pair <dist, condition1>. Then take the smallest dist. In case of equality the biggest condition1
-        return my_pair(distp12.Norm(), ped2->GetID());
+        if (abs(dir_angle_nn) > 1.)
+            return std::make_tuple(distp12.Norm(), -5.,ped2->GetID());
+        else
+            return std::make_tuple(distp12.Norm(), dir_angle_nn, ped2->GetID());
+    }
     else
-        return my_pair(FLT_MAX, ped2->GetID());
+        return std::make_tuple(FLT_MAX, -2., -3);
+        
 }
 Point VelocityModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2, int periodic) const
 {
@@ -558,3 +667,4 @@ double VelocityModel::GetDWall() const
 {
     return _DWall;
 }
+

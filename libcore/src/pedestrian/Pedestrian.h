@@ -38,6 +38,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <time.h>
 #include <vector>
 
 class Building;
@@ -52,24 +53,38 @@ private:
     int _exitIndex; // current exit
     int _group;
     int _desiredFinalDestination;
+    double _height;
+    double _age;
     double _premovement   = 0;
     double _riskTolerance = 0;
+    std::string _gender;
 
     //gcfm specific parameters
     double _mass;      // Mass: 1
     double _tau;       // Reaction time: 0.5
-    double _t;         // OV function
+    double _T;         // OV function
     double _deltaT;    // step size
-    JEllipse _ellipse; // the shape of this pedestrian
-    Point _v0;         //vector V0
+    double _speed_nn;
+    Point _direction_nn;
+    Point _direction;
+
+    double _angle_nn_int;
+    double _angle_int;
+    int _intID;
+    int _intIDN;
+    
+    JEllipse _ellipse; //the shape of this pedestrian
+    Point _V0;         //vector V0
 
 
-    double _v0UpStairs;
-    double _v0DownStairs;
-    double _v0EscalatorUpStairs;
-    double _v0EscalatorDownStairs;
-    double _v0IdleEscalatorUpStairs;
-    double _v0IdleEscalatorDownStairs;
+    double _V0UpStairs;
+    double _V0DownStairs;
+    double _EscalatorUpStairs;
+    double _EscalatorDownStairs;
+    double _V0IdleEscalatorUpStairs;
+    double _V0IdleEscalatorDownStairs;
+    //location parameters
+    std::string _roomCaption;
     int _roomID;
     int _subRoomID;
     int _subRoomUID;
@@ -80,14 +95,19 @@ private:
     NavLine * _navLine;            // current exit line
     std::map<int, int> _mentalMap; // map the actual room to a destination
     std::vector<int> _destHistory;
+    std::vector<int> _trip;
 
     Point _lastPosition;
+    int _lastCellPosition;
 
     ///state of doors with time stamps
     std::map<int, Knowledge> _knownDoors;
 
     /// distance to nearest obstacle that blocks the sight of ped.
     double _distToBlockade;
+    //routing parameters
+    /// new orientation after 10 seconds
+    double _reroutingThreshold;
     /// a new orientation starts after this time
     double _timeBeforeRerouting;
     /// actual time im Jam
@@ -105,7 +125,12 @@ private:
 
     int _newOrientationDelay; //2 seconds, in steps
 
+    /// necessary for smooth turning at sharp bend
+    double _updateRate;
+    double _turninAngle;
     bool _reroutingEnabled;
+    bool _tmpFirstOrientation; // possibility to get rid of this variable
+    bool _newOrientationFlag;  //this is used in the DirectionGeneral::GetTarget()
 
     // the current time in the simulation
     static double _globalTime;
@@ -120,11 +145,11 @@ private:
 
     static int _agentsCreated;
 
-    double _fedIn;
-    double _fedHeat;
+    double _FED_In;
+    double _FED_Heat;
 
-    std::shared_ptr<WalkingSpeed> _walkingSpeed         = nullptr;
-    std::shared_ptr<ToxicityAnalysis> _toxicityAnalysis = nullptr;
+    std::shared_ptr<WalkingSpeed> _WalkingSpeed         = nullptr;
+    std::shared_ptr<ToxicityAnalysis> _ToxicityAnalysis = nullptr;
 
     int _lastGoalID  = -1;
     bool _insideGoal = false;
@@ -132,9 +157,10 @@ private:
     Point _waitingPos;
 
 public:
+    // public member
+    int _ticksInThisRoom;
     // constructors
     Pedestrian();
-
     explicit Pedestrian(const StartDistribution & agentsParameters, Building & building);
     virtual ~Pedestrian();
 
@@ -143,8 +169,18 @@ public:
     void SetRoomID(int i);
     void SetSubRoomID(int i);
     void SetSubRoomUID(int i);
+    void SetMass(double m);
     void SetTau(double tau);
     void SetEllipse(const JEllipse & e);
+    void SetDirNn(const Point & direction_nn);
+    void SetDir(const Point & direction);
+
+    void SetSpeedNn(double speedNn);
+    void SetAngleNn(double angle_nn_int);
+    void SetAngle(double angle_int);
+
+    void SetIntID(int intID);
+    void SetIntIDN(int intIDN);
 
     double GetT() const;
     void SetT(double T);
@@ -153,15 +189,17 @@ public:
     void SetExitLine(const NavLine * l);
 
     void SetFEDIn(double FED_In);
-    double GetFEDIn() const;
+    double GetFEDIn();
 
     void SetFEDHeat(double FED_Heat);
-    double GetFEDHeat() const;
+    double GetFEDHeat();
 
-    void SetDeltaT(double dt);
+    void Setdt(double dt);
+    double Getdt() const;
 
     // Eigenschaften der Ellipse
     void SetPos(const Point & pos, bool initial = false); // setzt x und y-Koordinaten
+    void SetCellPos(int cp);
     void SetV(const Point & v); // setzt x und y-Koordinaten der Geschwindigkeit
     void SetV0Norm(
         double v0,
@@ -174,21 +212,37 @@ public:
     void SetSmoothTurning(); // activate the smooth turning with a delay of 2 sec
     void SetPhiPed();
     void SetFinalDestination(int UID);
+    void SetTrip(const std::vector<int> & trip);
     void SetRouter(Router * router);
 
+    // Getter-Funktionen
+    const std::vector<int> & GetTrip() const;
     int GetID() const;
     int GetRoomID() const;
     int GetSubRoomID() const;
     int GetSubRoomUID() const;
     double GetMass() const;
     double GetTau() const;
+    double GetSpeedNn() const;
+    double GetAngleNn() const;
+    double GetAngle() const;
+
+    int GetIntID() const;
+    int GetIntIDN() const;
     const JEllipse & GetEllipse() const;
     int GetExitIndex() const;
+    Router * GetRouter() const;
     NavLine * GetExitLine() const;
+    double GetUpdateRate() const;
     Point GetLastE0() const;
     void SetLastE0(Point E0);
     // Eigenschaften der Ellipse
     const Point & GetPos() const;
+    const Point & GetDirNn() const;
+    const Point & GetDir() const;
+
+    
+    int GetCellPos() const;
     const Point & GetV() const;
     const Point & GetV0() const;
     const Point & GetV0(const Point & target);
@@ -206,6 +260,21 @@ public:
     double GetSmallerAxis() const;
     double GetTimeInJam() const;
     int GetFinalDestination() const;
+    void ClearMentalMap(); //erase the peds memory
+
+    /**
+      * Update the knowledge of the pedestrian
+      * @param door
+      * @param ttime
+      * @param state
+      * @param quality
+      */
+    void AddKnownClosedDoor(int door, double ttime, bool state, double quality, double latency);
+
+    /***
+      * @return the knowledge of the pedstrian
+      */
+    std::map<int, Knowledge> & GetKnownledge();
 
     /**
       * @return all previous destinations used by this pedestrian
@@ -216,12 +285,21 @@ public:
       * For convenience
       * @return a string representation of the knowledge
       */
-    std::string GetKnowledgeAsString() const;
+    const std::string GetKnowledgeAsString() const;
+
+    /**
+      * clear all information related to the knowledge about closed doors
+      */
+    void ClearKnowledge();
 
     RoutingStrategy GetRoutingStrategy() const;
     int GetUniqueRoomID() const;
     int GetNextDestination();
+    int GetLastDestination();
     double GetDistanceToNextTarget() const;
+    double GetDisTanceToPreviousTarget() const;
+    bool GetNewEventFlag();
+    void SetNewEventFlag(bool flag);
 
     /**
      * Checks if between the last two calls of 'UpdateRoom(int, int)' the Suboom of the pedestrian
@@ -229,6 +307,8 @@ public:
      * @return pedestrians has moved to a different SubRoom.
      */
     bool ChangedSubRoom() const;
+    void RecordActualPosition();
+    double GetDistanceSinceLastRecord();
 
     /**
       * The elevation is computed using the plane
@@ -249,21 +329,47 @@ public:
     int FindRoute();
 
     ///write the pedestrian path (room and exit taken ) to file
+    void WritePath(std::ofstream & file, Building * building = nullptr);
+
+    ///write the pedestrian path (room and exit taken ) to file
     /// in the format room1:exit1>room2:exit2
     std::string GetPath();
 
     /**
-      * ToString the parameters of this pedestrians.
+      * Dump the parameters of this pedestrians.
       * @param ID, the id of the pedestrian
       * @param pa, the parameter to display (0 for all parameters)
       */
-    std::string ToString() const;
+    void Dump(int ID, int pa = 0) const;
+
+    /**
+      * observe the reference pedestrians and collect some data, e.g distance to exit
+      * and average/maximal velocities
+      *
+      * @param maxObservationTime in sec.
+      * @return false, if the observation time is over and the observation data can be retrieved
+      */
+    bool Observe(double maxObservationTime = -1);
+
+    /**
+      * @return true, if reference pedestrian have been selected
+      * and the observation process has started
+      */
+    bool IsObserving();
+
+    /**
+      * return the observation data in an array
+      *
+      * @param exitID, the concerned exit
+      * @param data, a float array to store the data
+      */
+    void GetObservationData(int exitID, float * data);
 
     /**
       * @return true if the time spent in jam exceed the patience time
       * @see GetPatienceTime
       */
-    bool IsFeelingLikeInJam() const;
+    bool IsFeelingLikeInJam();
 
     /**
       * Set/Get the patience time.
@@ -284,14 +390,14 @@ public:
       * this pedestrians will be coloured and all other grey out.
       * @param spotlight true for enabling, false for disabling
       */
-    [[maybe_unused]] void SetSpotlight(bool spotlight);
+    void SetSpotlight(bool spotlight);
 
     /**
       * Set/Get the spotlight value. If true,
       * this pedestrians will be coloured and all other grey out.
       * @param spotlight true for enabling, false for disabling
       */
-    bool GetSpotlight() const;
+    bool GetSpotlight();
 
     /***
       * Set/Get the time after which this pedestrian will start taking actions.
@@ -301,7 +407,7 @@ public:
     /***
       * Set/Get the time after which this pedestrian will start taking actions.
       */
-    double GetPremovementTime() const;
+    double GetPremovementTime();
 
     /**
       * Get min Premovement time of all pedestrians
@@ -331,9 +437,11 @@ public:
 
     void ResetTimeInJam();
     void UpdateTimeInJam();
+    void UpdateJamData();
     void UpdateReroutingTime();
+    double GetReroutingTime();
     void RerouteIn(double time);
-    bool IsReadyForRerouting() const;
+    bool IsReadyForRerouting();
 
     /**
       * clear the parameter related to the re routing
@@ -357,6 +465,12 @@ public:
       */
     double GetMeanVelOverRecTime() const;
 
+    double GetAge() const;
+    void SetAge(double age);
+    std::string GetGender() const;
+    void SetGender(std::string gender);
+    double GetHeight() const;
+    void SetHeight(double height);
     int GetGroup() const;
     void SetGroup(int group);
 
@@ -389,15 +503,27 @@ public:
 
     void SetWalkingSpeed(std::shared_ptr<WalkingSpeed> walkingSpeed);
 
+    void
+    WalkingUpstairs(double c, SubRoom * sub, double ped_elevation, double & walking_speed) const;
+    void
+    WalkingDownstairs(double & walking_speed, double c, SubRoom * sub, double ped_elevation) const;
+
+
     void SetTox(std::shared_ptr<ToxicityAnalysis> toxicityAnalysis);
 
     void ConductToxicityAnalysis();
+
+    bool Relocate(std::function<void(const Pedestrian &)> flowupdater);
+
+    const std::shared_ptr<ToxicityAnalysis> & getToxicityAnalysis();
 
     void EnterGoal();
 
     void LeaveGoal();
 
     int GetLastGoalID() const;
+
+    bool IsInsideGoal() const;
 
     bool IsInsideWaitingAreaWaiting() const;
 
@@ -409,6 +535,8 @@ public:
 
     void StartWaiting();
     void EndWaiting();
+
+    bool IsOutside();
 
     /**
      * Updates the room information the pedestrian is located. The information the pedestrian was
@@ -440,7 +568,5 @@ public:
 
     const std::queue<Point> & GetLastPositions() const;
 
-    Point GetLastPosition() const;
+    const Point GetLastPosition() const;
 };
-
-std::ostream & operator<<(std::ostream & out, const Pedestrian & pedestrian);

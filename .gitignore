@@ -1,4 +1,17 @@
 /build/
+
+/files/jureca_upload/trajectories
+/files/jureca_upload/Texfiles
+/files/jureca_upload/__pycashe__
+/files/jureca_upload/venv
+/files/trajectories
+/files/jureca_upload/test_traj2000.txt
+/files/jule_exp_files
+files/jureca_upload/ini_2_9_lm_55_esigma_0_7_tmax_156_periodic_0_v0_1_34_T_1_3_rho_ini_3_6_Nped_55_0_motfrac_1_0/
+files/jureca_upload/ini_3_0_lm_55_esigma_0_7_tmax_156_periodic_0_v0_1_34_T_1_3_rho_ini_3_6_Nped_55_0_motfrac_1_0/
+files/jureca_upload/angledist/
+files/jureca_upload/plots/
+files/jureca_upload/test_traj2000.txt
 /lib/
 /bin/
 /outside/
@@ -189,6 +202,7 @@ JuPedSim-blx.bib
 _tex/
 titlepage.tex
 /demos/*/results
-
 __pycache__
 ipynb_checkpoints/
+
+

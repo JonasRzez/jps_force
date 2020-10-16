@@ -557,6 +557,8 @@ bool IniFileParser::ParseVelocityModel(TiXmlElement * xVelocity, TiXmlElement * 
     //periodic
     if(!ParsePeriodic(*xModelPara))
         return false;
+    
+    
 
     //force_ped
     if(xModelPara->FirstChild("force_ped")) {
@@ -575,6 +577,26 @@ bool IniFileParser::ParseVelocityModel(TiXmlElement * xVelocity, TiXmlElement * 
         }
         LOG_INFO("Frep_ped a={:.2f}, D={:.2f}", _config->GetaPed(), _config->GetDPed());
     }
+    //noise
+    if (xModelPara->FirstChild("e_noise")){
+            if (!xModelPara->FirstChildElement("e_noise")->Attribute("mu"))
+                 _config->set_emu(0.0); // default value
+            else {
+                 std::string emu = xModelPara->FirstChildElement("e_noise")->Attribute("mu");
+                 _config->set_emu(std::stod(emu));
+                
+            }
+            
+            if (!xModelPara->FirstChildElement("e_noise")->Attribute("sigma"))
+                 _config->set_esigma(0.0); // default value
+            else {
+                 std::string esigma = xModelPara->FirstChildElement("e_noise")->Attribute("sigma");
+                 _config->set_esigma(std::stod(esigma));
+            }
+        }
+
+
+    
     //force_wall
     if(xModelPara->FirstChild("force_wall")) {
         if(!xModelPara->FirstChildElement("force_wall")->Attribute("a"))
@@ -599,9 +621,12 @@ bool IniFileParser::ParseVelocityModel(TiXmlElement * xVelocity, TiXmlElement * 
     _config->SetModel(std::shared_ptr<OperationalModel>(new VelocityModel(
         _directionManager,
         _config->GetaPed(),
+        
         _config->GetDPed(),
         _config->GetaWall(),
-        _config->GetDWall())));
+        _config->GetDWall(),
+        _config->get_esigma(),
+        _config->get_emu())));
 
     return true;
 }
@@ -940,6 +965,9 @@ bool IniFileParser::ParseLinkedCells(const TiXmlNode & linkedCellNode)
     return false;
 }
 
+
+
+
 bool IniFileParser::ParseStepSize(TiXmlNode & stepNode)
 {
     if(stepNode.FirstChild("stepsize")) {
@@ -984,19 +1012,33 @@ bool IniFileParser::ParseStepSize(TiXmlNode & stepNode)
     return false;
 }
 
-bool IniFileParser::ParsePeriodic(TiXmlNode & Node)
+bool IniFileParser::ParsePeriodic(TiXmlNode& Node)
 {
-    if(Node.FirstChild("periodic")) {
-        const char * periodic = Node.FirstChild("periodic")->FirstChild()->Value();
-        if(periodic)
-            _config->SetIsPeriodic(atoi(periodic));
-        LOG_INFO("Periodic <{}>", _config->IsPeriodic());
-        return true;
-    } else {
-        _config->SetIsPeriodic(0);
-    }
-    return true; //default is periodic=0. If not specified than is OK
+     
+     if(Node.FirstChild("periodic")) {
+         const char * periodic = Node.FirstChild("periodic")->FirstChild()->Value();
+         if(periodic)
+             _config->SetIsPeriodic(atoi(periodic));
+     } else {
+         _config->SetIsPeriodic(0);
+     }
+     
+     if(Node.FirstChild("periodic_boundaries")) {
+         const char * ymin = Node.FirstChildElement("periodic_boundaries")->Attribute("ymin");
+         const char * ymax = Node.FirstChildElement("periodic_boundaries")->Attribute("ymax");
+         const char * xmin = Node.FirstChildElement("periodic_boundaries")->Attribute("xmin");
+         const char * xmax = Node.FirstChildElement("periodic_boundaries")->Attribute("xmax");
+         _config->set_ymin(xmltof(ymin));
+         _config->set_ymax(xmltof(ymax));
+         _config->set_xmin(xmltof(xmin));
+         _config->set_xmax(xmltof(xmax));
+
+     }
+     return true; //default is periodic=0. If not specified than is OK
+     
 }
+
+
 
 bool IniFileParser::ParseStrategyNodeToObject(const TiXmlNode & strategyNode)
 {
