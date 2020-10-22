@@ -1,12 +1,12 @@
 #!/bin/bash -x
 #SBATCH -J db
 #SBATCH --account=jias70
-#SBATCH --nodes=20
+#SBATCH --nodes=10
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
 #SBATCH --output=out.%j
 #SBATCH --error=err.%j
-#SBATCH --time=21:00:00
+#SBATCH --time=15:00:00
 #SBATCH --mail-user=j.rzezonka@fz-juelich.de
 #SBATCH --mail-type=ALL
 

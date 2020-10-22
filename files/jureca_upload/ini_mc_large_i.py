@@ -7,8 +7,8 @@ import evac_large as ev
 os.system("mkdir trajectories")
 b =  np.array([50])
 start = 0
-size = 20
-run_jump = 1
+size = 100
+run_jump = 10
 #i_step = 1
 #irange = np.arange(i_start,i_final,i_step)
 #brange = np.arange(b_min,b_max,b_step)

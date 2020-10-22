@@ -126,7 +126,7 @@ def var_ini():
     N_ped = np.array([50])
 
     r = 0.175
-    fps = 16
+    fps = 2
     stepsize = 0.05
     #N_ped = 55
     i_start = 0
