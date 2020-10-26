@@ -29,7 +29,7 @@ def render_template(template_filename, context):
 def Product(variables):
     return list(itertools.product(*variables))
 
-def create_inifile(geo_name, geo_name_ini, cross_new, ini_list, ini_folder_list , location, folder, r,  stepsize, fps, l0_list, t_max,periodic, rand_mot, mot_hm_lm):
+def create_inifile(geo_name, geo_name_ini, cross_new, ini_list, ini_folder_list , location, folder, r,  stepsize, fps, l0_list, t_max,periodic, rand_mot, mot_hm_lm,ini_i):
     
    #location = [path + "evac_traj_" + str(2 * bi)[0] + str(2*bi)[-1] + ".txt" for bi in b_list]
     #print(geo_name,location)
@@ -37,11 +37,12 @@ def create_inifile(geo_name, geo_name_ini, cross_new, ini_list, ini_folder_list 
     for var,fname,l0 in zip(cross_new, geo_name,l0_list):
         context= {'b': var[1],'l':l0, 'll': 1.5 * l0,"wedge":var[1] - 0.4}
         fname = folder + fname
-        #print("output geo: ",  fname)
-        print(os.system("pwd"))
-        with open(fname,'w') as f:
-            xml = render_template('evac_geo_temp.xml', context)
-            f.write(xml)
+        if os.path.isfile(fname) == False:
+            #print("output geo: ",  fname)
+            print(os.system("pwd"))
+            with open(fname,'w') as f:
+                xml = render_template('evac_geo_temp.xml', context)
+                f.write(xml)
     #print("shapes " , np.array(geo_name_ini).shape,np.array(location).shape,np.array(ini_list).shape,np.array(cross_new).shape)
     
     for geo,loc,fname_ini,var,l0,ini_folder_i in zip(geo_name_ini,location,ini_list,cross_new,l0_list,ini_folder_list):
@@ -251,7 +252,7 @@ def ini_traj_folder(motivation,N_ped,t_max,r,fps,test_var):
 
     return path,data_folder,traj_folder
 
-def main(b,i_start,i_end,esigma):
+def main(b,i_start,i_end,esigma,ini_i):
     sec_test_var, append, rho_ini_rand,rand_mot = ini_bool()
     dig,test_var,test_var2,var_i,motivation = test_var_ini()
     rho_ini,T , v0,esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs,rho_min,rho_max,avoid_wall,mot_frac = var_ini(i_start,i_end,esigma)
@@ -274,7 +275,7 @@ def main(b,i_start,i_end,esigma):
     geo_name = [data_folder + "/" + ini_folder + "/" + "geo_" + b_data_name(var[1],dig) + ".xml" for var, ini_folder in zip(cross_new, ini_folder_list)]
     geo_name_ini = ["geo_" + b_data_name(var[1],dig) + ".xml" for var in cross_new]
 
-    ini_list = [data_folder + "/" + ini_folder + "/" + "ini_" + b_data_name(var[1],dig) + ".xml" for var, ini_folder in zip(cross_new, ini_folder_list)]
+    ini_list = [data_folder + "/" + ini_folder + "/" + "ini_" + b_data_name(var[1],dig)+ str(ini_i) + ".xml" for var, ini_folder in zip(cross_new, ini_folder_list)]
     output_list = [data_folder + "/" + ini_folder for var, ini_folder in zip(cross_new, ini_folder_list)]
     for i in range(i_start,i_end):
         print("iteration = " , i)
@@ -287,7 +288,7 @@ def main(b,i_start,i_end,esigma):
 
         l0_list = [round(var[5]/(2 * var[4]*var[1]),2) for var in cross_new]
         l0_list = [l0 if l0 > 7. else 7. for l0 in l0_list]
-        create_inifile(geo_name,geo_name_ini,cross_new,ini_list ,output_list,location,traj_folder,r,stepsize,fps,l0_list,t_max,periodic,rand_mot,mot_hm_lm)
+        create_inifile(geo_name,geo_name_ini,cross_new,ini_list ,output_list,location,traj_folder,r,stepsize,fps,l0_list,t_max,periodic,rand_mot,mot_hm_lm,ini_i)
         os.system("pwd")
         os.chdir("../../build/bin")
         run_count = 0
@@ -300,6 +301,6 @@ def main(b,i_start,i_end,esigma):
         os.chdir("../../files/jureca_upload")
 
 if __name__ == "__main__":
-    main(b,i_start,i_end,esigma)
+    main(b,i_start,i_end,esigma,ini_i)
 
 

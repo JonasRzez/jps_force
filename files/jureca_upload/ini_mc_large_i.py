@@ -37,11 +37,16 @@ for i in np.arange(0,size)[::run_jump]:
     #file.write("b = np.array([30]) \n")
     file.write("b = np.array(["+str(b[0])+"]) \n")
     file.write("b = np.array([round(i,3) for i in b]) \n")
-    file.write("esigma = np.array(["+ str(esigma[0]) + ",")
-    for sigma in esigma[1:-1]:
-    	file.write(str(sigma) + ",")
-    file.write(str(esigma[-1]) + "])\n")
-    file.write("ev.main(b,i_start,i_end,esigma) \n")
+    
+    if esigma.shape[0] > 1:
+        file.write("esigma = np.array(["+ str(esigma[0]) + ",")
+        for sigma in esigma[1:-1]:
+            file.write(str(sigma) + ",")
+        file.write(str(esigma[-1]) + "])\n")
+    else:
+        file.write("esigma = np.array(["+str(esigma[0])+"])\n")
+
+    file.write("ev.main(b,i_start,i_end,esigma,i_start) \n")
 
     file.close()
     mc_i += 1
