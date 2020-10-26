@@ -104,14 +104,14 @@ def ini_bool():
     return sec_test_var,append,rho_ini_rand,rand_mot
 def test_var_ini():
     dig = 3  # for the rounding of digits
-    test_var = "b"
+    test_var = "esigma"
     test_var2 = "T"
     motivation = "_lm_"
     var_i = test_var_fetch(test_var)
 
     return dig,test_var,test_var2,var_i,motivation
 
-def var_ini(i_start,i_end):
+def var_ini(i_start,i_end,esigma):
     #rho_min = 2.0
     #rho_max = 3.0
     rho_min = 2.0
@@ -122,15 +122,15 @@ def var_ini(i_start,i_end):
     mot_frac = np.array([1.])
     avoid_wall = np.array([0.25,0.25])
     v0 = np.array([1.34])
-    esigma = np.array([0.7])
-    N_ped = np.array([10000])
+    #esigma = np.array([0.7])
+    N_ped = np.array([10])
 
     r = 0.2
     fps = 1
     stepsize = 0.05
     #N_ped = 55
-    N_runs = 100
-    t_max = 300
+    N_runs = 10
+    t_max = 30
     periodic = 1
     return rho_ini, T, v0, esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs, rho_min, rho_max, avoid_wall, mot_frac
 
@@ -205,10 +205,10 @@ def ini_csv(path,N_runs,fps,N_ped,t_max,periodic,var_i,test_var,sec_test_var,tes
 
 # </saving information>
 
-def ini_files(b,i_start,i_end):
+def ini_files(b,i_start,i_end,esigma):
     sec_test_var, append, rho_ini_rand, rand_mot = ini_bool()
     dig, test_var, test_var2, var_i, motivation = test_var_ini()
-    rho_ini, T, v0, esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs, rho_min, rho_max, wall_avoidance, mot_frac = var_ini(i_start,i_end)
+    rho_ini, T, v0, esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs, rho_min, rho_max, wall_avoidance, mot_frac = var_ini(i_start,i_end,esigma)
     b = b/2
 
     variables = np.array([esigma, b, v0, T, rho_ini,N_ped, mot_frac])
@@ -251,10 +251,10 @@ def ini_traj_folder(motivation,N_ped,t_max,r,fps,test_var):
 
     return path,data_folder,traj_folder
 
-def main(b,i_start,i_end):
+def main(b,i_start,i_end,esigma):
     sec_test_var, append, rho_ini_rand,rand_mot = ini_bool()
     dig,test_var,test_var2,var_i,motivation = test_var_ini()
-    rho_ini,T , v0,esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs,rho_min,rho_max,avoid_wall,mot_frac = var_ini(i_start,i_end)
+    rho_ini,T , v0,esigma, fps, stepsize, N_ped, i_start, i_end, t_max, periodic, r, N_runs,rho_min,rho_max,avoid_wall,mot_frac = var_ini(i_start,i_end,esigma)
     run_total = N_runs * b.shape[0]
     b = b / 2
     mot_hm_lm = [0.1,1.3]
@@ -300,6 +300,6 @@ def main(b,i_start,i_end):
         os.chdir("../../files/jureca_upload")
 
 if __name__ == "__main__":
-    main(b,i_start,i_end)
+    main(b,i_start,i_end,esigma)
 
 
