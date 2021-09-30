@@ -1,4 +1,8 @@
 #! /bin/bash
+
+export CC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc"
+export CXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++
+
 set -e
 ROOT_DIR=$(pwd)
 INSTALL_DIR=${ROOT_DIR}/deps

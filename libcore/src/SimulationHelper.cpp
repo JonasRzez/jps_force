@@ -297,14 +297,17 @@ void SimulationHelper::RemoveFaultyPedestrians(
 }
 
 void SimulationHelper::RemovePedestrians(Building & building, std::vector<Pedestrian *> & peds,int periodic,double xmax,double xmin,double ymax,double ymin)
+    
 {
+    //std::cout<<"RemovePedestrians "<< periodic <<std::endl;
+    //periodic = 1;
     std::for_each(std::begin(peds), std::end(peds), [&building,xmax,ymax,xmin,ymin,periodic](Pedestrian * ped) {
         if(periodic > 0){
             double x = (xmax - xmin) * ((double)rand() / (double)RAND_MAX ) + xmin;
             double y = (ymax - ymin) * ((double)rand() / (double)RAND_MAX ) + ymin;
             std::cout << "new x " << x << " , " << "new y " << y << std::endl;
-            std::cout << "xmin " << xmin << " , " << "ymin " << ymin << std::endl;
-            std::cout << "xmax " << xmax << " , " << "ymax " << ymax << std::endl;
+            //std::cout << "xmin " << xmin << " , " << "ymin " << ymin << std::endl;
+            //std::cout << "xmax " << xmax << " , " << "ymax " << ymax << std::endl;
 
 
             ped->SetPos({x, y});

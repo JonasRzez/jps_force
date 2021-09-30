@@ -2,9 +2,9 @@
 
 
 <geometry version="0.8" caption="Projectname"  unit="m"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../xsd/jps_geometry.xsd">
-    <rooms>
+	<rooms>
         <room id="1" caption="hall">
             <subroom id="1" calass="floor">
                 <polygon caption="wall">
@@ -35,7 +35,14 @@
                    <vertex px="0.4" py="0.0"/>
                    <vertex px="0.25" py="-0.15"/>
                 </polygon>
-
+                <polygon caption="wall">
+                   <vertex px="-0.25" py="-0.15"/>
+                   <vertex px="-0.25" py="-1.0"/>
+                </polygon>
+                <polygon caption="wall">
+                   <vertex px="0.25" py="-0.15"/>
+                   <vertex px="0.25" py="-1.0"/>
+                </polygon>
             </subroom>
         </room>
     </rooms>
@@ -43,8 +50,8 @@
     <transitions>
         <transition id="1" caption="" type="emergency"
             room1_id="1" subroom1_id="1" room2_id="-1" subroom2_id="-1">
-            <vertex px="-0.25" py="-0.15" />
-            <vertex px="0.25" py="-0.15" />
+            <vertex px="-0.25" py="-1.0" />
+            <vertex px="0.25" py="-1.0" />
         </transition>
     </transitions>
 </geometry>

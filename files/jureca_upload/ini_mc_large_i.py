@@ -5,11 +5,11 @@ import evac_large as ev
 #sys.path.insert(1,'/p/project/jias70/jps_jureca/files/jureca_upload')
 
 os.system("mkdir trajectories")
-b =  np.array([50])
+b =  np.array([40])
 start = 0
-size = 2
+size = 1
 run_jump = 1
-esigma_list = np.array([[0.2],[0.4]])
+esigma_list = np.array([[.7]])
 esigma_ini = np.empty(0)
 for esig in esigma_list:
     esigma_ini = np.append(esigma_ini,esig)

@@ -60,7 +60,7 @@ Pedestrian::Pedestrian()
     _premovement               = 0;
     _riskTolerance             = 0;
     _gender                    = "female";
-    _mass                      = 1;
+    _mass                      = 80;
     _tau                       = 0.5;
     _T                         = 1.0;
     _deltaT                    = 0.01;

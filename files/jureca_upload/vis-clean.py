@@ -183,10 +183,12 @@ def read_subroom_walls(xml_doc):
 # path_name     = 'SBB'
 # traj_filename = '/Users/tobias/Documents/development/jupedsim/jpscore-issues/426-corner/01-no/corner_traj'
 # geo_filename = '/Users/tobias/Documents/development/jupedsim/jpscore-issues/426-corner/01-no/corner_geo.xml'
-traj_filename ='/Users/jonas/Documents/phd/c++/jurecajps/files/jureca_upload/trajectories/ini_lm_N_ped10000_tmax300_size_0_2_fps_1_testvar_esigma/ini_25_0_lm_10000_esigma_0_15_tmax_300_periodic_1_v0_1_34_T_1_0_rho_ini_2_0_Nped_10000_0_motfrac_1_0/new_evac_traj_50_0_1'
-geo_filename = '/Users/jonas/Documents/phd/c++/jurecajps/files/jureca_upload/trajectories/ini_lm_N_ped10000_tmax300_size_0_2_fps_1_testvar_esigma/ini_25_0_lm_10000_esigma_0_15_tmax_300_periodic_1_v0_1_34_T_1_0_rho_ini_2_0_Nped_10000_0_motfrac_1_0/geo_25_0.xml'
 
-fps = 16
+file_loc = "/Users/jonas/Documents/phd/c++/jpsgithub/jurecajps/files/jureca_upload/trajectories/ini_lm_N_ped1000_tmax50_size_0_1_fps_25_testvar_esigma/ini_25_0_lm_1000_esigma_0_0_tmax_50_periodic_0_v0_1_34_T_1_0_rho_ini_2_0_Nped_1000_0_motfrac_1_0"
+traj_filename =file_loc + "/new_evac_traj_50_0_0"
+geo_filename = file_loc + "/geo_25_0.xml"
+
+fps = 25
 
 xml_datei = open(geo_filename, "r")
 geo_xml = parse(xml_datei)

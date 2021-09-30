@@ -106,6 +106,7 @@ bool Simulation::InitArgs()
     _ymax             = _config->get_ymax();
     _xmin             = _config->get_xmin();
     _ymin             = _config->get_ymin();
+    std::cout << "xmin " << _xmin << "xmax " << _xmax << "ymin " << _ymin << "ymax "<< _ymax << "periodic "<< _periodic << std::endl;
 
 
     _routingEngine   = _config->GetRoutingEngine();

@@ -457,6 +457,11 @@ bool IniFileParser::ParseGCFMModel(TiXmlElement * xGCFM, TiXmlElement * xMainNod
     //linked-cells
     if(!ParseLinkedCells(*xModelPara))
         return false;
+    
+    //periodic
+    if(!ParsePeriodic(*xModelPara))
+        return false;
+
 
     //force_ped
     if(xModelPara->FirstChild("force_ped")) {
@@ -1018,8 +1023,11 @@ bool IniFileParser::ParsePeriodic(TiXmlNode& Node)
      if(Node.FirstChild("periodic")) {
          const char * periodic = Node.FirstChild("periodic")->FirstChild()->Value();
          if(periodic)
+             std::cout<<"periodic is set to "<< periodic << std::endl;
+
              _config->SetIsPeriodic(atoi(periodic));
      } else {
+         std::cout<<"periodic is set to null" << std::endl;
          _config->SetIsPeriodic(0);
      }
      

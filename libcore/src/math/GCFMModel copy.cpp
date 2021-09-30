@@ -48,10 +48,7 @@ GCFMModel::GCFMModel(
     double intp_widthped,
     double intp_widthwall,
     double maxfped,
-    double maxfwall
-
-                     
-                     )
+    double maxfwall)
 {
     _direction      = dir;
     _nuPed          = nuped;
@@ -62,8 +59,6 @@ GCFMModel::GCFMModel(
     _maxfWall       = maxfwall;
     _distEffMaxPed  = dist_effPed;
     _distEffMaxWall = dist_effWall;
-    
-
 }
 
 GCFMModel::~GCFMModel(void) {}
@@ -144,7 +139,7 @@ void GCFMModel::ComputeNextTimeStep(
             SubRoom * subroom = room->GetSubRoom(ped->GetSubRoomID());
             double normVi     = ped->GetV().ScalarProduct(ped->GetV());
             double tmp        = (ped->GetV0Norm() + delta) * (ped->GetV0Norm() + delta);
-            /*if(normVi > tmp && ped->GetV0Norm() > 0) {
+            if(normVi > tmp && ped->GetV0Norm() > 0) {
                 fprintf(
                     stderr,
                     "GCFMModel::calculateForce() WARNING: actual velocity (%f) of iped %d "
@@ -155,10 +150,10 @@ void GCFMModel::ComputeNextTimeStep(
                     current,
                     periodic);
                 // remove the pedestrian and abort
-                //building->DeletePedestrian(ped);
+                building->DeletePedestrian(ped);
                 // TODO KKZ track deleted peds
                 LOG_ERROR("One ped was removed due to high velocity");
-            }*/
+            }
 
             Point F_rep;
             std::vector<Pedestrian *> neighbours =
@@ -204,8 +199,6 @@ void GCFMModel::ComputeNextTimeStep(
                     repwall._x,
                     repwall._y);
             }
-            
-
 
             result_acc.push_back(acc);
         }
@@ -240,8 +233,6 @@ inline Point GCFMModel::ForceDriv(Pedestrian * ped, Room * room) const
     double dist       = ped->GetExitLine()->DistTo(pos);
     Point lastE0      = ped->GetLastE0();
     ped->SetLastE0(target - pos);
-    
-    //std::cout<< "mass = " <<ped->GetMass()<<std::endl;
 
     if((dynamic_cast<DirectionLocalFloorfield *>(_direction->GetDirectionStrategy().get())) ||
        (dynamic_cast<DirectionSubLocalFloorfield *>(_direction->GetDirectionStrategy().get()))) {
@@ -302,21 +293,76 @@ Point GCFMModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2) const
     p2 = Point(E2.GetXp(), 0)
              .TransformToCartesianCoordinates(E2.GetCenter(), E2.GetCosPhi(), E2.GetSinPhi());
     distp12 = p2 - p1;
-    
-    //social force model implimantation
-    ep12 = distp12.Normalized();
-    double l        = 2 * ped1->GetEllipse().GetBmax();
-    double distance = distp12.Norm();
-    
-    F_rep = ep12 *  -2000 * exp((l - distance)/0.08) ;
-    //F_rep = Point(0.0, 0.0);
-    if (distance - l < 0){
-        F_rep += ep12 * 240000 * (-l + distance);
-        
+    mindist = 0.5; //for performance reasons, it is assumed that this distance is about 50 cm
+    double dist_intpol_left  = mindist + _intp_widthPed;        // lower cut-off for Frep (modCFM)
+    double dist_intpol_right = _distEffMaxPed - _intp_widthPed; //upper cut-off for Frep (modCFM)
+    double smax              = mindist - _intp_widthPed;        //max overlapping
+    double f = 0.0f, f1 = 0.0f; //function value and its derivative at the interpolation point'
+
+    //todo: runtime normsquare?
+    if(distp12.Norm() >= J_EPS) {
+        ep12 = distp12.Normalized();
+
+    } else {
+        LOG_ERROR("GCFMModel::forcePedPed() ep12 cannot be computed.");
+        return F_rep; // FIXME: should never happen
+        exit(EXIT_FAILURE);
     }
-    
+    // calculate the parameter (whatever dist is)
+    tmp  = (vp1 - vp2).ScalarProduct(ep12); // < v_ij , e_ij >
+    v_ij = 0.5 * (tmp + fabs(tmp));
+    tmp2 = vp1.ScalarProduct(ep12); // < v_i , e_ij >
+
+    //todo: runtime normsquare?
+    if(vp1.Norm() < J_EPS) { // if(norm(v_i)==0)
+        K_ij = 0;
+    } else {
+        double bla = tmp2 + fabs(tmp2);
+        K_ij       = 0.25 * bla * bla / vp1.ScalarProduct(vp1); //squared
+
+        if(K_ij < J_EPS * J_EPS) {
+            F_rep = Point(0.0, 0.0);
+            return F_rep;
+        }
+    }
+    nom = _nuPed * ped1->GetV0Norm() + v_ij; // Nu: 0=CFM, 0.28=modifCFM;
+    nom *= nom;
+
+    K_ij = sqrt(K_ij);
+    if(dist_eff <= smax) { //5
+        f     = -ped1->GetMass() * K_ij * nom / dist_intpol_left;
+        F_rep = ep12 * _maxfPed * f;
+        return F_rep;
+    }
+
+    //          smax    dist_intpol_left           dist_intpol_right       dist_eff_max
+    //           ----|-------------|--------------------------|--------------|----
+    //           5   |     4       |            3             |      2       | 1
+
+    if(dist_eff >= dist_intpol_right) {                            //2
+        f     = -ped1->GetMass() * K_ij * nom / dist_intpol_right; // abs(NR-Dv(i)+Sa)
+        f1    = -f / dist_intpol_right;
+        px    = hermite_interp(dist_eff, dist_intpol_right, _distEffMaxPed, f, 0, f1, 0);
+        F_rep = ep12 * px;
+    } else if(dist_eff >= dist_intpol_left) {                   //3
+        f     = -ped1->GetMass() * K_ij * nom / fabs(dist_eff); // abs(NR-Dv(i)+Sa)
+        F_rep = ep12 * f;
+    } else { //4
+        f     = -ped1->GetMass() * K_ij * nom / dist_intpol_left;
+        f1    = -f / dist_intpol_left;
+        px    = hermite_interp(dist_eff, smax, dist_intpol_left, _maxfPed * f, f, 0, f1);
+        F_rep = ep12 * px;
+    }
+    if(F_rep._x != F_rep._x || F_rep._y != F_rep._y) {
+        LOG_ERROR(
+            "NAN return p1{:d} p2 {:d} Frepx={:f} Frepy={:f} K_ij={:f}",
+            ped1->GetID(),
+            ped2->GetID(),
+            F_rep._x,
+            F_rep._y,
+            K_ij);
+    }
     return F_rep;
-    
 }
 
 /* abstoßende Kraft zwischen ped und subroom
@@ -365,21 +411,19 @@ inline Point GCFMModel::ForceRepWall(Pedestrian * ped, const Line & w) const
     Point F     = Point(0.0, 0.0);
     Point pt    = w.ShortestPoint(ped->GetPos());
     double wlen = w.LengthSquare();
-    
-    /*if(wlen < 0.01) { // ignore walls smaller than 10 cm
+
+    if(wlen < 0.01) { // ignore walls smaller than 10 cm
         return F;
-    }*/
+    }
     // Kraft soll nur orthgonal wirken
     // ???
-    /*if(fabs((w.GetPoint1() - w.GetPoint2()).ScalarProduct(ped->GetPos() - pt)) > J_EPS) {
+    if(fabs((w.GetPoint1() - w.GetPoint2()).ScalarProduct(ped->GetPos() - pt)) > J_EPS) {
         return F;
-    }*/
+    }
     //double mind = ped->GetEllipse().MinimumDistanceToLine(w);
     double mind = 0.5; //for performance reasons this distance is assumed to be constant
     double vn   = w.NormalComp(ped->GetV()); //normal component of the velocity on the wall
     F           = ForceRepStatPoint(ped, pt, mind, vn);
-    
-    
 
     if(ped->GetID() == -33) {
         printf(
@@ -419,21 +463,23 @@ Point GCFMModel::ForceRepStatPoint(Pedestrian * ped, const Point & p, double l, 
     Point pinE; // vorher x1, y1
     const JEllipse & E = ped->GetEllipse();
 
-    /*if(d < J_EPS)
-        return Point(0.0, 0.0);*/
+    if(d < J_EPS)
+        return Point(0.0, 0.0);
     e_ij = dist / d;
-    
-    
-    double width        = 2 * ped->GetEllipse().GetBmax();
-    F_rep = e_ij *  2000 * exp((width - d)/0.08) ;
-    //std::cout<< "force strength" << - 0.1 * exp((width - d)/0.08)<<std::endl;
-
-    //F_rep = Point(0.0, 0.0);
-    if (d - width < 0){
-        F_rep += e_ij * 240000 * (-width + d);
-        //std::cout<< "force strengt" << 0.1 * (width - d)<<std::endl;
-    }
-    
+    tmp  = v.ScalarProduct(e_ij); // < v_i , e_ij >;
+    bla  = (tmp + fabs(tmp));
+    if(!bla) // Fussgaenger nicht im Sichtfeld
+        return Point(0.0, 0.0);
+    if(fabs(v._x) < J_EPS && fabs(v._y) < J_EPS) // v==0)
+        return Point(0.0, 0.0);
+    double K_ij;
+    K_ij = 0.5 * bla / v.Norm(); // K_ij
+    // Punkt auf der Ellipse
+    pinE = p.TransformToEllipseCoordinates(E.GetCenter(), E.GetCosPhi(), E.GetSinPhi());
+    // Punkt auf der Ellipse
+    r = E.PointOnEllipse(pinE);
+    //interpolierte Kraft
+    F_rep = ForceInterpolation(ped->GetV0Norm(), K_ij, e_ij, vn, d, (r - E.GetCenter()).Norm(), l);
     return F_rep;
 }
 

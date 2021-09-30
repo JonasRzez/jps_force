@@ -203,7 +203,7 @@ void VelocityModel::ComputeNextTimeStep(
             //Point repWall = ForceRepRoom(allPeds[p], subroom);
 
             // calculate new direction ei according to (6)
-            Point direction = e0(ped, room); //+ repPed + repWall;
+            Point direction = e0(ped, room); //+ repPed; //+ repWall;
             ped->SetDirNn(direction);
 
             std::random_device rd;
@@ -343,25 +343,25 @@ void VelocityModel::ComputeNextTimeStep(
             //std::cout<<pedReachedGoal<<std::endl;
             
             
-            if((checkPed == false) && ((y_neu > -1.) or (std::abs(x_neu) > 0.5))) {
+            if((checkPed == false) && ((y_neu > -0.15) or (std::abs(x_neu) > 0.5))) {
                 
                 //ped->SetPos(pos_alt);
                 //ped->SetRoomID(oldRoomID);
                 //ped->SetSubRoomID(oldSubRoomID);
                 //ped->SetSubRoomUID(oldSubRoomUID);
                 ped->SetPos(pos_alt);
-                std::cout<<"Pedestrian was not allowed to take step" << std::endl;
+                //std::cout<<"Pedestrian was not allowed to take step" << std::endl;
             }
             else{
                 ped->SetV(v_neu);
                 
             }
-            if(periodic) {
+           /* if(periodic) {
                 if(ped->GetPos()._x >= xRight) {
                     ped->SetPos(Point(ped->GetPos()._x - (xRight - xLeft), ped->GetPos()._y));
                     //ped->SetID( ped->GetID() + 1);
                 }
-            }
+            }*/
             
             
         }
@@ -462,14 +462,14 @@ VelocityModel::GetSpacing(Pedestrian * ped1, Pedestrian * ped2, Point ei, int pe
         dir_angle_nn = -3.;
     }
     //double dir_angle = dir.Normalized().ScalarProduct(dir_j.Normalized());
-    if(periodic) {
+    /*if(periodic) {
         double x   = ped1->GetPos()._x;
         double x_j = ped2->GetPos()._x;
         
         if((xRight - x) + (x_j - xLeft) <= cutoff) {
             distp12._x = distp12._x + xRight - xLeft;
         }
-    }
+    }*/
     double Distance = distp12.Norm();
     double l        = 2 * ped1->GetEllipse().GetBmax();
     Point ep12;
@@ -506,13 +506,13 @@ Point VelocityModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2, int perio
     // x- and y-coordinate of the distance between p1 and p2
     Point distp12 = ped2->GetPos() - ped1->GetPos();
 
-    if(periodic) {
+    /*if(periodic) {
         double x   = ped1->GetPos()._x;
         double x_j = ped2->GetPos()._x;
         if((xRight - x) + (x_j - xLeft) <= cutoff) {
             distp12._x = distp12._x + xRight - xLeft;
         }
-    }
+    }*/
 
     double Distance = distp12.Norm();
     Point ep12; // x- and y-coordinate of the normalized vector between p1 and p2
@@ -592,8 +592,7 @@ Point VelocityModel::ForceRepWall(
 {
     Point F_wrep = Point(0.0, 0.0);
     Point pt     = w.ShortestPoint(ped->GetPos());
-
-    Point dist       = pt - ped->GetPos(); // x- and y-coordinate of the distance between ped and p
+    Point dist = pt - ped->GetPos(); // x- and y-coordinate of the distance between ped and p
     const double EPS = 0.000;              // molified see Koester2013
     double Distance  = dist.Norm() + EPS;  // distance between the centre of ped and point p
     Point e_iw; // x- and y-coordinate of the normalized vector between ped and pt
