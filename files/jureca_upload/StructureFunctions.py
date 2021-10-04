@@ -589,6 +589,8 @@ def DataFrameBuilder2(test,test2):
     path, folder_list, N_runs, b, cross_var, folder_frame, test_str, test_var, test_var2, test_str2, lin_var, T_test_list, sec_test_var, N_ped, fps, mot_frac = af.var_ini()
 
     dfcsv = pd.read_csv(path + "plots/structure/XYcsv/filelist.csv")
+    print(dfcsv.head())
+    print("test2 = ",test2,"test = ", test)
     data = dfcsv[dfcsv[test_str2] == test2[0]]
     data = dfcsv[dfcsv['testvar'] == test[0]]["files"].values
     keys = pd.read_csv(data[0]).keys().values[1:]

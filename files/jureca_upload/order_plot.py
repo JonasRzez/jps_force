@@ -678,9 +678,9 @@ print(esigmas)
 """li = 1 #points in test_list
 lf = li + 1"""
 li = 0 #points in test_list
-lf = 1
+lf = 2
 index_bool = True
-range_max = 30
+range_max = 1
 ind = np.arange(0,range_max)
 print(ind)
 t_max = 2200
@@ -693,7 +693,7 @@ t_jump = 10
 #time_list = np.arange(0,1000,10)
 #time_list = np.append(time_list,np.arange(1000,11000,50))
 #time_list = np.arange(0,10000,100)
-time_list = np.arange(0,100,1)
+time_list = np.arange(0,200,5)
 #time_list = [350,450,500,600]
 print(time_list)
 #time_list = np.arange(0,1000,50)
@@ -718,7 +718,7 @@ th = 0.88
 #time_list = time_list[time_list > 2000]
 #fig, axis = plt.subplots(2,4,figsize=(5 * 4 ,5 * 2))
 for esig in np.unique(df_i.esigma.to_numpy()):
-    plotpath = "texfiles/16_09_2021_videos/testvideo_"
+    plotpath = "texfiles/16_09_2021_videos/testvideo_" + str(af.b_data_name(esig,3))
     os.system("mkdir " + plotpath)
     
     print(plotpath)

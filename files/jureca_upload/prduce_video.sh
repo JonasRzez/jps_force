@@ -1,10 +1,10 @@
+
+
 python ini_mc_large_i.py
 python mc_l_1.py
 wait
 
 cd texfiles/16_09_2021_videos/testvideo_
-
-
 
 rm *
 

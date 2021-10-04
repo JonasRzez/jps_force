@@ -309,8 +309,14 @@ def min_t(p,s1,s2):
 def file_writer(path,folder_list,N_runs,b,cross_var,folder_frame,test_str,test_var):
     sl = "/"
     print("writing files")
-    folder_anal_frame = [np.array(folder_frame[(folder_frame[test_str] == var[test_var])]['ini_folder'])[0] for var in
-                         cross_var]
+    print("folder_frame = ", folder_frame[test_str])
+    for var in  cross_var:
+        print("variable = ", var[test_var])
+        print("true = " ,folder_frame[test_str] == var[test_var],folder_frame[test_str])
+        print(folder_frame[(folder_frame[test_str] == var[test_var])].ini_folder.to_numpy())
+    folder_anal_frame = [folder_frame[(folder_frame[test_str] == var[test_var])].ini_folder.to_numpy()[0] for var in
+                     cross_var]
+
     print(folder_anal_frame)
     for i in range(N_runs):
         location = np.array(

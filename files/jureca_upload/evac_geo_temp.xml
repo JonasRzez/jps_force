@@ -21,19 +21,19 @@
                 </polygon>
                 <polygon caption="wall">
                     <vertex px="-{{b}}" py="0.0"/>
-                    <vertex px="-0.4" py="0.0"/>
+                    <vertex px="-0.5" py="0.0"/>
                 </polygon>
                 <polygon caption="wall">
                     <vertex px="{{b}}" py="0.0"/>
-                    <vertex px="0.4" py="0.0"/>
+                    <vertex px="0.5" py="0.0"/>
                 </polygon>
                 <polygon caption="wall">
-                   <vertex px="-0.4" py="0.0"/>
-                   <vertex px="-0.25" py="-0.15"/>
+                   <vertex px="-0.5" py="0.0"/>
+                   <vertex px="-0.4" py="-0.15"/>
                 </polygon>
                 <polygon caption="wall">
-                   <vertex px="0.4" py="0.0"/>
-                   <vertex px="0.25" py="-0.15"/>
+                   <vertex px="0.5" py="0.0"/>
+                   <vertex px="0.4" py="-0.15"/>
                 </polygon>
 
             </subroom>
@@ -43,8 +43,8 @@
     <transitions>
         <transition id="1" caption="" type="emergency"
             room1_id="1" subroom1_id="1" room2_id="-1" subroom2_id="-1">
-            <vertex px="-0.25" py="-0.15" />
-            <vertex px="0.25" py="-0.15" />
+            <vertex px="-0.4" py="-0.15" />
+            <vertex px="0.4" py="-0.15" />
         </transition>
     </transitions>
 </geometry>

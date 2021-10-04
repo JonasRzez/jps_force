@@ -63,6 +63,7 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
             <atau mu="0.0" sigma="0.00000" />
             
             <T mu="{{T_lm}}" sigma="0.00" />
+            <interaction_angle angle = "{{esig}}" />
         </agent_parameters>
         <agent_parameters agent_parameter_id="2">
             <v0 mu="{{v0}}" sigma="0.00" />
