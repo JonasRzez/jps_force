@@ -148,6 +148,12 @@ void AgentsParameters::InitT(double mean, double stdv)
     _T = std::normal_distribution<double>(mean, stdv);
 }
 
+void AgentsParameters::InitIntAngle(double int_angle)
+{
+    _int_angle = int_angle;
+}
+
+
 
 void AgentsParameters::EnableStretch(bool stretch)
 {
@@ -263,6 +269,11 @@ double AgentsParameters::GetTau()
     } else {
         return _Tau(_generator);
     }
+}
+
+double AgentsParameters::GetIntAngle()
+{
+    return _int_angle;
 }
 
 double AgentsParameters::GetT()

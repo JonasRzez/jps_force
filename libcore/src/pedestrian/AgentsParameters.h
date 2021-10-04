@@ -144,6 +144,10 @@ public:
      * @param stv, standard deviation
      */
     void InitT(double mean, double stv);
+    
+    void InitIntAngle(double init_angle);
+    
+    void InitIntAngle(double mean, double stv);
 
     void EnableStretch(bool stretch);
 
@@ -208,11 +212,15 @@ public:
      * @return a random number following the distribution
      */
     double GetTau();
+    
+    double GetIntAngle();
 
     /**
      * @return a random number following the distribution
      */
     double GetT();
+    
+  
 
     /**
      * @return whether Ellipse stretching is enabled
@@ -241,6 +249,7 @@ private:
     std::normal_distribution<double> _Bmax;
     std::normal_distribution<double> _Bmin;
     bool _enableStretch = true;
+    double _int_angle;
     std::normal_distribution<double> _Atau;
     std::normal_distribution<double> _Amin;
     std::normal_distribution<double> _Tau;

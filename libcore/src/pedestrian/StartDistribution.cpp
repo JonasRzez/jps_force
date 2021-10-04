@@ -185,6 +185,7 @@ StartDistribution::GenerateAgent(Building * building, int * pid, std::vector<Poi
     ped->SetEllipse(E);
     ped->SetTau(_groupParameters->GetTau());
     ped->SetT(_groupParameters->GetT());
+    ped->SetIntAngle(_groupParameters->GetIntAngle());
     ped->SetV0Norm(
         _groupParameters->GetV0(),
         _groupParameters->GetV0UpStairs(),

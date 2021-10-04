@@ -63,6 +63,7 @@ Pedestrian::Pedestrian()
     _mass                      = 80;
     _tau                       = 0.5;
     _T                         = 1.0;
+    _int_angle                 = -1.;
     _deltaT                    = 0.01;
     _ellipse                   = JEllipse();
     _V0                        = Point(0, 0);
@@ -148,6 +149,7 @@ Pedestrian::Pedestrian(const StartDistribution & agentsParameters, Building & bu
     _mass                    = 1;
     _tau                     = 0.5;
     _T                       = 1.0;
+    _int_angle               = -1.0;
     _newOrientationFlag      = false;
     _newOrientationDelay     = 0; //0 seconds, in steps
     _tmpFirstOrientation     = true;
@@ -247,6 +249,11 @@ void Pedestrian::SetTau(double tau)
 void Pedestrian::SetT(double T)
 {
     _T = T;
+}
+
+void Pedestrian::SetIntAngle(double int_angle)
+{
+    _int_angle = int_angle;
 }
 
 void Pedestrian::SetEllipse(const JEllipse & e)
@@ -435,6 +442,11 @@ double Pedestrian::GetTau() const
 double Pedestrian::GetT() const
 {
     return _T;
+}
+
+double Pedestrian::GetIntAngle() const
+{
+    return _int_angle;
 }
 
 const JEllipse & Pedestrian::GetEllipse() const

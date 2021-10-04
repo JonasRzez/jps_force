@@ -63,6 +63,7 @@ private:
     double _mass;      // Mass: 1
     double _tau;       // Reaction time: 0.5
     double _T;         // OV function
+    double _int_angle;
     double _deltaT;    // step size
     double _speed_nn;
     Point _direction_nn;
@@ -171,6 +172,7 @@ public:
     void SetSubRoomUID(int i);
     void SetMass(double m);
     void SetTau(double tau);
+    void SetIntAngle(double int_angle);
     void SetEllipse(const JEllipse & e);
     void SetDirNn(const Point & direction_nn);
     void SetDir(const Point & direction);
@@ -223,6 +225,7 @@ public:
     int GetSubRoomUID() const;
     double GetMass() const;
     double GetTau() const;
+    double GetIntAngle() const;
     double GetSpeedNn() const;
     double GetAngleNn() const;
     double GetAngle() const;

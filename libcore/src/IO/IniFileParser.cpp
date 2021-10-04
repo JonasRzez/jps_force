@@ -485,6 +485,8 @@ bool IniFileParser::ParseGCFMModel(TiXmlElement * xGCFM, TiXmlElement * xMainNod
             std::stod(disteff_max),
             std::stod(interpolation_width));
     }
+    
+
 
     //force_wall
     if(xModelPara->FirstChild("force_wall")) {
@@ -768,6 +770,12 @@ void IniFileParser::ParseAgentParameters(TiXmlElement * operativModel, TiXmlNode
                 agentParameters->InitT(mu, sigma);
                 LOG_INFO("T mu={} , sigma={}", mu, sigma);
             }
+            
+            if(xAgentPara->FirstChild("interaction_angle")) {
+                double int_angle    = xmltof(xAgentPara->FirstChildElement("interaction_angle")->Attribute("angle"));
+                agentParameters->InitIntAngle(int_angle);
+                LOG_INFO("int_angle = {}", int_angle);
+            }
 
             if(_model == 3) { // Tordeux2015
                 double max_Eb = 2 * agentParameters->GetBmax();
@@ -1042,6 +1050,8 @@ bool IniFileParser::ParsePeriodic(TiXmlNode& Node)
          _config->set_xmax(xmltof(xmax));
 
      }
+    
+    
      return true; //default is periodic=0. If not specified than is OK
      
 }

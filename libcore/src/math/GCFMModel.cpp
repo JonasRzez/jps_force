@@ -296,7 +296,6 @@ Point GCFMModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2) const
     Point p1, p2; // "Normale" Koordinaten
     double mindist;
 
-
     p1 = Point(E1.GetXp(), 0)
              .TransformToCartesianCoordinates(E1.GetCenter(), E1.GetCosPhi(), E1.GetSinPhi());
     p2 = Point(E2.GetXp(), 0)
@@ -307,14 +306,25 @@ Point GCFMModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2) const
     ep12 = distp12.Normalized();
     double l        = 2 * ped1->GetEllipse().GetBmax();
     double distance = distp12.Norm();
+    /*if (vp1.Norm() > 0){
+        K_ij = 0.5 * (vp1.ScalarProduct(ep12) + std::abs(vp1.ScalarProduct(ep12)))/vp1.Norm();
+    }
+    else K_ij = 0.;*/
+    //std::cout << "intAngle = " << ped1->GetIntAngle() << std::endl;
     
-    F_rep = ep12 *  -2000 * exp((l - distance)/0.08) ;
+    if (vp1.ScalarProduct(ep12) > ped1->GetIntAngle()){
+        //std::cout<< "angle values = " << vp1.ScalarProduct(ep12) << " , " << ped1->GetIntAngle() << std::endl;
+        K_ij = 1;
+    }
+    else K_ij = 0.;
+    
+    F_rep = ep12 *  -2000 * exp((l - distance)/0.08) * K_ij ;
     //F_rep = Point(0.0, 0.0);
     if (distance - l < 0){
         F_rep += ep12 * 240000 * (-l + distance);
         
     }
-    
+    //std::cout<< "K_ij = " << K_ij << " vp1_nomr = "<< vp1.Norm() << " vp1 * ep12 = " << vp1.ScalarProduct(ep12) << " abs(vp1*ep12) = "<< std::abs(vp1.ScalarProduct(ep12)) << std::endl;
     return F_rep;
     
 }
@@ -423,9 +433,8 @@ Point GCFMModel::ForceRepStatPoint(Pedestrian * ped, const Point & p, double l, 
         return Point(0.0, 0.0);*/
     e_ij = dist / d;
     
-    
     double width        = 2 * ped->GetEllipse().GetBmax();
-    F_rep = e_ij *  2000 * exp((width - d)/0.08) ;
+    F_rep = e_ij *  -2000 * exp((width - d)/0.08) ;
     //std::cout<< "force strength" << - 0.1 * exp((width - d)/0.08)<<std::endl;
 
     //F_rep = Point(0.0, 0.0);
