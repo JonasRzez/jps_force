@@ -10,8 +10,8 @@ start = 0
 size = 1
 run_jump = 1
 pi_round = np.round(np.pi,3)
-esigma_list = np.array([np.round(np.arange(-0.2,0.3,0.05),3)])
-#esigma_list = np.array([[0.2,0.3]])
+#esigma_list = np.array([np.round(np.arange(,0.3,0.05),3)])
+esigma_list = np.round(np.array([[i] for i in np.arange(-1.,1.2,0.2)]),2)
 print(esigma_list)
 esigma_ini = np.empty(0)
 for esig in esigma_list:

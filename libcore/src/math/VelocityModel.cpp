@@ -203,7 +203,7 @@ void VelocityModel::ComputeNextTimeStep(
             //Point repWall = ForceRepRoom(allPeds[p], subroom);
 
             // calculate new direction ei according to (6)
-            Point direction = e0(ped, room); //+ repPed; //+ repWall;
+            Point direction = e0(ped, room) + repPed; //+ repWall;
             ped->SetDirNn(direction);
 
             std::random_device rd;
@@ -542,8 +542,18 @@ Point VelocityModel::ForceRepPed(Pedestrian * ped1, Pedestrian * ped2, int perio
     }
     double condition1 = ei.ScalarProduct(ep12);            // < e_i , e_ij > should be positive
     condition1        = (condition1 > 0) ? condition1 : 0; // abs
-
-    R_ij  = -_aPed * exp((l - Distance) / _DPed);
+    Point LastE0 = ped1->GetLastE0();
+    double K_ij;
+    if (LastE0.ScalarProduct(ep12) > ped1->GetIntAngle()){
+        //std::cout<< "angle values = " << vp1.ScalarProduct(ep12) << " , " << ped1->GetIntAngle() << std::endl;
+        K_ij = 1;
+    }
+    else K_ij = 0.;
+    
+    R_ij  = -_aPed * exp((l - Distance) / _DPed) * K_ij;
+    
+    
+    
     F_rep = ep12 * R_ij;
 
     return F_rep;

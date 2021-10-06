@@ -678,7 +678,7 @@ print(esigmas)
 """li = 1 #points in test_list
 lf = li + 1"""
 li = 0 #points in test_list
-lf = 2
+lf = 11
 index_bool = True
 range_max = 1
 ind = np.arange(0,range_max)
@@ -693,7 +693,7 @@ t_jump = 10
 #time_list = np.arange(0,1000,10)
 #time_list = np.append(time_list,np.arange(1000,11000,50))
 #time_list = np.arange(0,10000,100)
-time_list = np.arange(0,200,5)
+time_list = np.arange(0,900,20)
 #time_list = [350,450,500,600]
 print(time_list)
 #time_list = np.arange(0,1000,50)

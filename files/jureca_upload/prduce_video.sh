@@ -1,5 +1,3 @@
-
-
 python ini_mc_large_i.py
 python mc_l_1.py
 wait

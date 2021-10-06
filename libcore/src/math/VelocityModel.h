@@ -70,6 +70,7 @@ private:
     double _DWall;
     double _esigma;
     double _emu;
+    double K_ij;
 
     /**
       * Optimal velocity function \f$ V(spacing) =\min{v_0, \max{0, (s-l)/T}}  \f$

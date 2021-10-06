@@ -26,7 +26,7 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
         </doors>
 </traffic_constraints>
 
-<agents operational_model_id="3">
+<agents operational_model_id="1">
         <agents_distribution>
                 <group group_id="1" agent_parameter_id="1" room_id="1" subroom_id="1" number="{{N_ped_hm}}"  router_id="1"x_min="-{{b}}"  x_max="{{b}}" y_min="0" y_max = "{{l}}"  />
                 <group group_id="2" agent_parameter_id="2" room_id="1" subroom_id="1" number="{{N_ped_lm}}"  router_id="1"x_min="-{{b}}"  x_max="{{b}}" y_min="0" y_max = "{{l}}"  />
@@ -36,7 +36,7 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
 
 <operational_models>
 
-    <model operational_model_id="3" description="Tordeux2015">
+    <model operational_model_id="1" description="gcfm">
         <model_parameters>
             <solver>euler</solver>
             <periodic>{{periodic}}</periodic>
@@ -50,9 +50,8 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
             <use_wall_avoidance>true</use_wall_avoidance>
             
             <linkedcells enabled="true" cell_size="2.2" />
-            <force_ped a="0." D="0.0" />
-            <force_wall a="0.0" D="0.0" />
-            <e_noise mu = "0.0" sigma = "{{esig}}" />
+            <force_ped nu="0.6" dist_max="3" disteff_max="2" interpolation_width="0.1" />
+            <force_wall nu="0.1" dist_max="1" disteff_max="2" interpolation_width="0.1" />
 
         </model_parameters>
         <agent_parameters agent_parameter_id="1">
@@ -62,7 +61,9 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
             <amin mu="{{r}}" sigma="0.00000" />
             <tau mu="0.5" sigma="0.00" />
             <atau mu="0.0" sigma="0.00000" />
+            
             <T mu="{{T_lm}}" sigma="0.00" />
+            <interaction_angle angle = "{{esig}}" />
         </agent_parameters>
         <agent_parameters agent_parameter_id="2">
             <v0 mu="{{v0}}" sigma="0.00" />
@@ -71,6 +72,7 @@ xsi:noNamespaceSchemaLocation="http://xsd.jupedsim.org/jps_geometry.xsd" unit="m
             <amin mu="{{r}}" sigma="0.00000" />
             <tau mu="0.5" sigma="0.00" />
             <atau mu="0.0" sigma="0.00000" />
+            
             <T mu="{{T_hm}}" sigma="0.00" />
         </agent_parameters>
 
